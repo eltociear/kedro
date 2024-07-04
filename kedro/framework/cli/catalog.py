@@ -14,12 +14,11 @@ from click import secho
 from kedro.framework.cli.utils import KedroCliError, env_option, split_string
 from kedro.framework.project import pipelines, settings
 from kedro.framework.session import KedroSession
-from kedro.framework.startup import ProjectMetadata
 from kedro.io import AbstractDataset
 from kedro.io.data_catalog import DataCatalog
 
 
-def _create_session(package_name: str, **kwargs: Any) -> KedroSession:
+def _create_session(**kwargs: Any) -> KedroSession:
     kwargs.setdefault("save_on_close", False)
     return KedroSession.create(**kwargs)
 
@@ -46,14 +45,14 @@ def catalog() -> None:
     callback=split_string,
 )
 @click.pass_obj
-def list_datasets(metadata: ProjectMetadata, pipeline: str, env: str) -> None:
+def list_datasets(pipeline: str, env: str) -> None:
     """Show datasets per type."""
     title = "Datasets in '{}' pipeline"
     not_mentioned = "Datasets not mentioned in pipeline"
     mentioned = "Datasets mentioned in pipeline"
     factories = "Datasets generated from factories"
 
-    session = _create_session(metadata.package_name, env=env)
+    session = _create_session(env=env)
     context = session.load_context()
 
     try:
@@ -144,7 +143,7 @@ def _map_type_to_datasets(
     help="Name of a pipeline.",
 )
 @click.pass_obj
-def create_catalog(metadata: ProjectMetadata, pipeline_name: str, env: str) -> None:
+def create_catalog(pipeline_name: str, env: str) -> None:
     """Create Data Catalog YAML configuration with missing datasets.
 
     Add ``MemoryDataset`` datasets to Data Catalog YAML configuration
@@ -155,7 +154,7 @@ def create_catalog(metadata: ProjectMetadata, pipeline_name: str, env: str) -> N
     `<conf_source>/<env>/catalog_<pipeline_name>.yml` file.
     """
     env = env or "base"
-    session = _create_session(metadata.package_name, env=env)
+    session = _create_session(env=env)
     context = session.load_context()
 
     pipeline = pipelines.get(pipeline_name)
@@ -212,9 +211,9 @@ def _add_missing_datasets_to_catalog(missing_ds: list[str], catalog_path: Path) 
 @catalog.command("rank")
 @env_option
 @click.pass_obj
-def rank_catalog_factories(metadata: ProjectMetadata, env: str) -> None:
+def rank_catalog_factories(env: str) -> None:
     """List all dataset factories in the catalog, ranked by priority by which they are matched."""
-    session = _create_session(metadata.package_name, env=env)
+    session = _create_session(env=env)
     context = session.load_context()
 
     catalog_factories = {
@@ -230,11 +229,11 @@ def rank_catalog_factories(metadata: ProjectMetadata, env: str) -> None:
 @catalog.command("resolve")
 @env_option
 @click.pass_obj
-def resolve_patterns(metadata: ProjectMetadata, env: str) -> None:
+def resolve_patterns(env: str) -> None:
     """Resolve catalog factories against pipeline datasets. Note that this command is runner
     agnostic and thus won't take into account any default dataset creation defined in the runner."""
 
-    session = _create_session(metadata.package_name, env=env)
+    session = _create_session(env=env)
     context = session.load_context()
 
     catalog_config = context.config_loader["catalog"]
