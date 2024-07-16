@@ -2,11 +2,14 @@
 title "$ <project>\n$ python -m <project>.run"
 
 participant "$ <project>\n$ python -m <project>" as cli
-participant "setup.py\n<project> = <project>.~__main__" as entrypoint
-participant "KedroSession" as session
+participant "pyproject.toml\n<project> = '<project>.~__main__:main'" as entrypoint
+participant "~__main__.py\nmain()" as main
+participant "~__main__.py\n_find_run_command()" as find_run
+participant "~__main__.py\nrun()" as run
 
 cli->entrypoint: Python calls the entrypoint
-entrypoint->session: create session
-session->session: run
+entrypoint->main: main() function called
+main->find_run: Determine run command to execute
+find_run->run: run()
 
 @enduml
